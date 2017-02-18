@@ -1,19 +1,19 @@
 <?php
 /*******************************************************************************
- * custom.rewriteurls - SEO rewrite and replace urls
+ * citrus.rewriteurls - SEO rewrite and replace urls
  * Copyright 2017 Semenov Roman
  * MIT License
  ******************************************************************************/
 
-namespace Custom\Rewriteurls;
+namespace Citrus\Rewriteurls;
 
-defined("B_PROLOG_INCLUDED") and (B_PROLOG_INCLUDED === true) or die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 
-define(__NAMESPACE__ . "\ID", "custom.rewriteurls");
+define(__NAMESPACE__ . "\ID", "citrus.rewriteurls");
 
 define(__NAMESPACE__ . "\SITE", substr($_SERVER["SERVER_NAME"], 0, 4) == "www."?
 	substr($_SERVER["SERVER_NAME"], 4) : $_SERVER["SERVER_NAME"]);
