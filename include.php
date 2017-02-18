@@ -9,6 +9,10 @@ namespace Custom\Rewriteurls;
 
 defined("B_PROLOG_INCLUDED") and (B_PROLOG_INCLUDED === true) or die();
 
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
+
 define(__NAMESPACE__ . "\ID", "custom.rewriteurls");
 
 define(__NAMESPACE__ . "\SITE", substr($_SERVER["SERVER_NAME"], 0, 4) == "www."?
@@ -20,25 +24,9 @@ define(__NAMESPACE__ . "\CONFIG",
 define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".php");
 define(__NAMESPACE__ . "\FILE_REPLACE_URLS", CONFIG . ".replace.php");
 
-use Bitrix\Main\EventManager;
-use Bitrix\Main\Event;
-use Bitrix\Main\EventResult;
-
 class ctx {
 	static $replaceUrls;
 }
-
-// rewrite urls
-EventManager::getInstance()->addEventHandler("main", "OnFileRewrite", function (Event $e) {
-	$path = $e->getParameter("path");
-	$rewriteUrls = include FILE_REWRITE_URLS;
-
-	// TODO remove params?
-
-	if (isset($rewriteUrls[$_SERVER["REQUEST_URI"]])) {
-		return new EventResult(EventResult::SUCCESS, $rewriteUrls[$_SERVER["REQUEST_URI"]]);
-	}
-});
 
 function ReplaceUrls($m) {
 	if (strpos($m[1], 'href=') === false) {
@@ -53,7 +41,6 @@ function ReplaceUrls($m) {
 	if (!preg_match('{href=[\'\"]+(.+?)[\'\"]+}i', $m[1], $mattrs)) {
 		return $m[0];
 	}
-
 	// if is internal link
 	if ((strpos($mattrs[1], 'http://') === false
 				&& strpos($mattrs[1], 'https://') === false) ||
@@ -80,31 +67,52 @@ function ReplaceUrls($m) {
 			}
 		}
 	}
-
 	return $m[0];
 }
 
-// replace urls
-EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent",
-	function (&$content) {
-		global $APPLICATION;
-		if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
-			return;
-		}
-		if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
-				|| \CSite::InDir("/bitrix/")) {
-			return;
-		}
-
-		ctx::$replaceUrls = include FILE_REPLACE_URLS;
-		if (empty(ctx::$replaceUrls)) {
-			return;
-		}
-		ctx::$replaceUrls = array_flip(ctx::$replaceUrls);
-		$content = preg_replace_callback(
-			'{<a([^>]*)>}is',
-			__NAMESPACE__ . '\ReplaceUrls',
-			$content
-		);
+function init() {
+	global $APPLICATION;
+	if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
+		return;
 	}
-);
+	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
+			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
+		return;
+	}
+
+	// rewrite urls
+	if (1) { // TODO use checkbox settings from module
+		EventManager::getInstance()->addEventHandler("main", "OnFileRewrite", function (Event $e) {
+			$path = $e->getParameter("path");
+			$rewriteUrls = include FILE_REWRITE_URLS;
+			if (empty($rewriteUrls)) {
+				return;
+			}
+			$uri = $_SERVER["REQUEST_URI"];
+
+			// TODO ?remove params from $uri
+
+			if (isset($rewriteUrls[$uri])) {
+				return new EventResult(EventResult::SUCCESS, $rewriteUrls[$uri]);
+			}
+		});
+	}
+
+	// replace urls
+	if (1) { // TODO use checkbox settings from module
+		EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent", function (&$content) {
+			ctx::$replaceUrls = include FILE_REPLACE_URLS;
+			if (empty(ctx::$replaceUrls)) {
+				return;
+			}
+			ctx::$replaceUrls = array_flip(ctx::$replaceUrls);
+			$content = preg_replace_callback(
+				'{<a([^>]*)>}is',
+				__NAMESPACE__ . "\ReplaceUrls",
+				$content
+			);
+		});
+	}
+}
+
+init();
