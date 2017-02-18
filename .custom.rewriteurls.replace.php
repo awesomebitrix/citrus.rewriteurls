@@ -1,5 +1,5 @@
 <?php
 
 return array(
-	"/test/" => "/contacts/index.php",
+	"/test/" => "/contacts/",
 );
