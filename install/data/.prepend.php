@@ -22,7 +22,7 @@ function Options() {
 	return $result;
 }
 
-function init() {
+function RewriteUrl() {
 	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")) { // ignore non GET and HEAD requests
 		return;
 	}
@@ -39,27 +39,39 @@ function init() {
 	}
 	$uri = $_SERVER["REQUEST_URI"];
 
-	var_dump($uri);
-
 	// TODO ?remove params from $uri
 
-	if (isset($rewriteUrls[$uri])) {
-		// FIX use redirect
-		//if (0) {
-		//	header("HTTP/1.1 301 Moved Permanently");
-		//	header("Location: " . $CUSTOM_SEO_REWRITE_URLS[$_SERVER["REQUEST_URI"]]);
-		//	exit;
-		//}
-
-		// FIX use rewrite
-		$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"]
-			= $rewriteUrls[$uri];
-		$_SERVER["PHP_SELF"] = $_SERVER["SCRIPT_NAME"] = "/bitrix/urlrewrite.php";
-		$_SERVER["SCRIPT_FILENAME"] = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/urlrewrite.php";
-		$_SERVER["REDIRECT_STATUS"] = "200";
-		require $_SERVER["SCRIPT_FILENAME"];
-		exit;
+	if (!isset($rewriteUrls[$uri])) {
+		return;
 	}
+	$newUri = $rewriteUrls[$uri];
+
+	// use redirect
+	//if (0) {
+	//	header("HTTP/1.1 301 Moved Permanently");
+	//	header("Location: " . $CUSTOM_SEO_REWRITE_URLS[$_SERVER["REQUEST_URI"]]);
+	//	exit;
+	//}
+
+	// ignore static page
+	if ((substr($newUri, -4) == ".php"
+				|| substr($newUri, -4) == ".htm"
+				|| substr($newUri, -5) == ".html")
+			&& file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri)) {
+		return;
+	}
+	if (file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri . "/index.php")) {
+		return;
+	}
+	return $newUri;
 }
 
-init();
+$res = RewriteUrl();
+if (!empty($res)) {
+	$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $res;
+	$_SERVER["PHP_SELF"] = $_SERVER["SCRIPT_NAME"] = "/bitrix/urlrewrite.php";
+	$_SERVER["SCRIPT_FILENAME"] = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/urlrewrite.php";
+	$_SERVER["REDIRECT_STATUS"] = "200";
+	require $_SERVER["SCRIPT_FILENAME"];
+	exit;
+}
