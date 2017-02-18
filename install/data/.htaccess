@@ -1,0 +1,6 @@
+
+# add this to .htaccess or in php.ini for auto prepend file
+
+<IfModule mod_php5.c>
+	php_value auto_prepend_file /home/path/to/public_html/.prepend.php
+</IfModule>
