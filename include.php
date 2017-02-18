@@ -82,7 +82,7 @@ function ReplaceUrls($m) {
 function init() {
 	global $APPLICATION;
 	if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
-		//!!! return;
+		return;
 	}
 	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
 			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
