@@ -1,4 +1,9 @@
 <?php
+/*******************************************************************************
+ * citrus.rewriteurls - SEO rewrite and replace urls
+ * Copyright 2017 Semenov Roman
+ * MIT License
+ ******************************************************************************/
 
 namespace Citrus\RewriteurlsPrepend;
 
