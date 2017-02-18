@@ -102,6 +102,7 @@ function init() {
 			if (empty($rewriteUrls)) {
 				return;
 			}
+			$options = Options();
 			if ($options["ignore_query"] == "Y") {
 				$uri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 			} else {
