@@ -82,7 +82,7 @@ function ReplaceUrls($m) {
 function init() {
 	global $APPLICATION;
 	if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
-		//return;
+		//!!! return;
 	}
 	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
 			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
@@ -106,7 +106,26 @@ function init() {
 			// TODO ?remove params from $uri
 
 			if (isset($rewriteUrls[$uri])) {
-				return new EventResult(EventResult::SUCCESS, $rewriteUrls[$uri]);
+				$newUri = $rewriteUrls[$uri];
+				// static page
+				if ((substr($newUri, -4) == ".php"
+							|| substr($newUri, -4) == ".htm"
+							|| substr($newUri, -5) == ".html")
+						&& file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri)) {
+					return new EventResult(EventResult::SUCCESS, $newUri);
+				}
+				if (file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri . "/index.php")) {
+					return new EventResult(EventResult::SUCCESS, $newUri . "/index.php");
+				}
+				/*
+				// virtual page
+				$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $newUri;
+				// not work
+				require $_SERVER["SCRIPT_FILENAME"];
+				exit;
+				// not work
+				return new EventResult(EventResult::SUCCESS, $newUri); // $newUri . "/index.php"
+				*/
 			}
 		});
 	}
