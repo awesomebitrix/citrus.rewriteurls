@@ -81,10 +81,6 @@ function ReplaceUrls($m) {
 }
 
 function init() {
-	global $APPLICATION;
-	if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
-		return;
-	}
 	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
 			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
 		return;
@@ -94,6 +90,10 @@ function init() {
 	// rewrite urls
 	if ($options["rewrite_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnFileRewrite", function (Event $e) {
+			global $APPLICATION;
+			if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
+				return;
+			}
 			$path = $e->getParameter("path");
 			if (!is_readable(FILE_REWRITE_URLS)) {
 				return;
@@ -136,6 +136,10 @@ function init() {
 	// replace urls
 	if ($options["replace_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent", function (&$content) {
+			global $APPLICATION;
+			if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
+				return;
+			}
 			if (!is_readable(FILE_REPLACE_URLS)) {
 				return;
 			}
