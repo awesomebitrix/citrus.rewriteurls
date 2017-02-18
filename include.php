@@ -21,11 +21,20 @@ define(__NAMESPACE__ . "\SITE", substr($_SERVER["SERVER_NAME"], 0, 4) == "www."?
 define(__NAMESPACE__ . "\CONFIG",
 	$_SERVER["DOCUMENT_ROOT"] . "/upload/." . ID . "." . SITE);
 
-define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".php");
+define(__NAMESPACE__ . "\FILE_OPTIONS", CONFIG . ".php");
+define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".rewrite.php");
 define(__NAMESPACE__ . "\FILE_REPLACE_URLS", CONFIG . ".replace.php");
 
 class ctx {
 	static $replaceUrls;
+}
+
+function Options() {
+	$result = is_readable(FILE_OPTIONS)? include FILE_OPTIONS : array(
+		"rewrite_urls" => "Y",
+		"replace_urls" => "Y",
+	);
+	return $result;
 }
 
 function ReplaceUrls($m) {
@@ -49,7 +58,7 @@ function ReplaceUrls($m) {
 		$url = $mattrs[1];
 		$u = parse_url($url);
 		$newUrl = $url;
-		// fix link
+		// fix link - add / at end
 		if ($u['path'] != '' && $u['path'] != '/' &&
 				substr($u['path'], -1) != '/' &&
 				($u['scheme'] == '' || $u['scheme'] == 'http' || $u['scheme'] == 'https')) {
@@ -60,7 +69,7 @@ function ReplaceUrls($m) {
 				//echo '<!-- ' . $u['path'] . ' - ' . print_r($p, true) . ' -->' . PHP_EOL;
 			}
 		}
-		// rewrite url
+		// rewrite url if defined
 		if (!empty(ctx::$replaceUrls)) {
 			if (isset(ctx::$replaceUrls[$newUrl])) {
 				$m[0] = str_replace($newUrl, ctx::$replaceUrls[$newUrl], $m[0]);
@@ -79,11 +88,15 @@ function init() {
 			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
 		return;
 	}
+	$options = Options();
 
 	// rewrite urls
-	if (1) { // TODO use checkbox settings from module
+	if ($options["rewrite_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnFileRewrite", function (Event $e) {
 			$path = $e->getParameter("path");
+			if (!is_readable(FILE_REWRITE_URLS)) {
+				return;
+			}
 			$rewriteUrls = include FILE_REWRITE_URLS;
 			if (empty($rewriteUrls)) {
 				return;
@@ -99,8 +112,11 @@ function init() {
 	}
 
 	// replace urls
-	if (1) { // TODO use checkbox settings from module
+	if ($options["replace_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent", function (&$content) {
+			if (!is_readable(FILE_REPLACE_URLS)) {
+				return;
+			}
 			ctx::$replaceUrls = include FILE_REPLACE_URLS;
 			if (empty(ctx::$replaceUrls)) {
 				return;
