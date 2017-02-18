@@ -33,6 +33,7 @@ function Options() {
 	$result = is_readable(FILE_OPTIONS)? include FILE_OPTIONS : array(
 		"rewrite_urls" => "Y",
 		"replace_urls" => "Y",
+		"ignore_query" => "Y",
 	);
 	return $result;
 }
@@ -101,10 +102,11 @@ function init() {
 			if (empty($rewriteUrls)) {
 				return;
 			}
-			$uri = $_SERVER["REQUEST_URI"];
-
-			// TODO ?remove params from $uri
-
+			if ($options["ignore_query"] == "Y") {
+				$uri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+			} else {
+				$uri = $_SERVER["REQUEST_URI"];
+			}
 			if (isset($rewriteUrls[$uri])) {
 				$newUri = $rewriteUrls[$uri];
 				// static page

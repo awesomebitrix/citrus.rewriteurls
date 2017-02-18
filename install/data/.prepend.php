@@ -18,6 +18,7 @@ function Options() {
 	$result = is_readable(FILE_OPTIONS)? include FILE_OPTIONS : array(
 		"rewrite_urls" => "Y",
 		"replace_urls" => "Y",
+		"ignore_query" => "Y",
 	);
 	return $result;
 }
@@ -37,10 +38,11 @@ function RewriteUrl() {
 	if (empty($rewriteUrls)) {
 		return;
 	}
-	$uri = $_SERVER["REQUEST_URI"];
-
-	// TODO ?remove params from $uri
-
+	if ($options["ignore_query"] == "Y") {
+		$uri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
+	} else {
+		$uri = $_SERVER["REQUEST_URI"];
+	}
 	if (!isset($rewriteUrls[$uri])) {
 		return;
 	}
@@ -49,7 +51,7 @@ function RewriteUrl() {
 	// use redirect
 	//if (0) {
 	//	header("HTTP/1.1 301 Moved Permanently");
-	//	header("Location: " . $CUSTOM_SEO_REWRITE_URLS[$_SERVER["REQUEST_URI"]]);
+	//	header("Location: " . $newUri);
 	//	exit;
 	//}
 
