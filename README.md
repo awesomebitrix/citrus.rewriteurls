@@ -15,4 +15,16 @@
 
 ### Примеры настроек 
 
-Cм. папку /install/data/, протестировано на демке для "Корпоративный сайт услуг" (bitrix.sitecorporate).
+Cм. папку /install/data/.
+
+## Описание техподдержки и контактных данных
+
+Тех. поддержка и кастомизация оказывается на платной основе, запросы только по [e-mail](mailto:rivetweb@yandex.ru)
+
+[Багрепорты и предложения](https://github.com/rivetweb/citrus.rewriteurls/issues)
+
+[Пул реквесты](https://github.com/rivetweb/citrus.rewriteurls/pulls)
+
+## Ссылка на демо-версию
+
+Протестировано на демо-решении "Корпоративный сайт услуг" (bitrix.sitecorporate).
