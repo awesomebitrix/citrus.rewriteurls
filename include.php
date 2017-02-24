@@ -72,7 +72,7 @@ function init() {
 				return;
 			}
 			global $APPLICATION;
-			if (!empty(ctx::$fixBreadcrumbs) {
+			if (!empty(ctx::$fixBreadcrumbs)) {
 				$APPLICATION->AddChainItem($APPLICATION->GetTitle());
 			}
 			//if (!empty($CITRUS_CUSTOM["last_chain"])) {
