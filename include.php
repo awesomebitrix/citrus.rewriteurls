@@ -35,7 +35,7 @@ function init() {
 			//$path = $e->getParameter("path");
 			list($uri, $isStaticPage) = Route();
 			if ($isStaticPage) {
-				//var_dump($uri);
+				var_dump("static", $uri);
 				return new EventResult(EventResult::SUCCESS, $uri);
 			}
 		});

@@ -10,10 +10,10 @@ namespace Citrus\Rewriteurls;
 require __DIR__ . "/.init.php";
 
 $res = Route();
-var_dump($res); die;
+//var_dump($res); die;
 
 if (!empty($res) && $res[1] === false) {
-	$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $res;
+	$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $res[0];
 	$_SERVER["PHP_SELF"] = $_SERVER["SCRIPT_NAME"] = "/bitrix/urlrewrite.php";
 	$_SERVER["SCRIPT_FILENAME"] = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/urlrewrite.php";
 	$_SERVER["REDIRECT_STATUS"] = "200";
