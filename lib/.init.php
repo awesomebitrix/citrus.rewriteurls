@@ -17,10 +17,13 @@ define(__NAMESPACE__ . "\CONFIG",
 
 define(__NAMESPACE__ . "\FILE_OPTIONS", CONFIG . ".php");
 define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".rewrite.php");
-define(__NAMESPACE__ . "\FILE_REPLACE_URLS", CONFIG . ".replace.php");
+define(__NAMESPACE__ . "\FILE_REWRITE_URLS_PARTS", CONFIG . ".rewriteparts.php");
 
 class ctx {
+	static $rewriteUrls;
+	static $rewriteUrlsParts;
 	static $replaceUrls;
+	static $replaceUrlsParts;
 }
 
 function Options() {
@@ -33,54 +36,60 @@ function Options() {
 	return $result;
 }
 
-// TODO get path and type for page url
-function RouteUrl() {
-	//...
-}
-
-function RewriteUrl() {
-	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")) { // ignore non GET and HEAD requests
-		return;
-	}
+function Route($uri = null, $checkPageType = true) {
+	//if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")) { // ignore non GET and HEAD requests
+	//	return;
+	//}
 	$options = Options();
 	if ($options["rewrite_urls"] != "Y") {
-		return;
+		return null;
 	}
-	if (!is_readable(FILE_REWRITE_URLS)) {
-		return;
+	// init rewrite urls
+	if (empty(ctx::$rewriteUrls) && is_readable(FILE_REWRITE_URLS)) {
+		ctx::$rewriteUrls = include FILE_REWRITE_URLS;
 	}
-	$rewriteUrls = include FILE_REWRITE_URLS;
-	if (empty($rewriteUrls)) {
-		return;
+	if (empty(ctx::$rewriteUrlsParts) && is_readable(FILE_REWRITE_URLS_PARTS)) {
+		ctx::$rewriteUrlsParts = include FILE_REWRITE_URLS_PARTS;
 	}
-	if ($options["ignore_query"] == "Y") {
-		$uri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
-	} else {
+	if (empty(ctx::$rewriteUrls) && empty(ctx::$rewriteUrlsParts)) {
+		return null;
+	}
+	// route url
+	if (empty($uri)) {
 		$uri = $_SERVER["REQUEST_URI"];
 	}
-	if (!isset($rewriteUrls[$uri])) {
-		return;
+	if ($options["ignore_query"] == "Y") {
+		$uri = parse_url($uri, PHP_URL_PATH);
 	}
-	$newUri = $rewriteUrls[$uri];
-
-	// use redirect
-	//if (0) {
-	//	header("HTTP/1.1 301 Moved Permanently");
-	//	header("Location: " . $newUri);
-	//	exit;
-	//}
-
-	// ignore static page
+	$newUri = "";
+	if (isset(ctx::$rewriteUrls[$uri])) {
+		$newUri = ctx::$rewriteUrls[$uri]; // exact url
+	} else if (isset(ctx::$rewriteUrlsParts[$uri])) {
+		$newUri = ctx::$rewriteUrlsParts[$uri]; // exact url
+	} else { // find part url
+		foreach (ctx::$rewriteUrlsParts as $fromUri => $toUri) {
+			if (substr($uri, 0, strlen($fromUri)) == $fromUri) {
+				$newUri = $toUri . substr($uri, strlen($fromUri));
+				break;
+			}
+		}
+	}
+	if ($newUri == "") {
+		return null;
+	}
+	if (!$checkPageType) {
+		return array($newUri, null);
+	}
 	if ((substr($newUri, -4) == ".php"
 				|| substr($newUri, -4) == ".htm"
 				|| substr($newUri, -5) == ".html")
 			&& file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri)) {
-		return;
+		return array($newUri, true); // is static page
 	}
 	if (file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri . "/index.php")) {
-		return;
+		return array($newUri . "/index.php", true); // is static page
 	}
-	return $newUri;
+	return array($newUri, false); // is virtual page
 }
 
 function ReplaceUrls($m) {
@@ -118,6 +127,8 @@ function ReplaceUrls($m) {
 		if (!empty(ctx::$replaceUrls)) {
 			if (isset(ctx::$replaceUrls[$newUrl])) {
 				$m[0] = str_replace($newUrl, ctx::$replaceUrls[$newUrl], $m[0]);
+			} else {
+				//... TODO find for patt url
 			}
 		}
 	}

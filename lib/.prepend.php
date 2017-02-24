@@ -9,8 +9,10 @@ namespace Citrus\Rewriteurls;
 
 require __DIR__ . "/.init.php";
 
-$res = RewriteUrl();
-if (!empty($res)) {
+$res = Route();
+var_dump($res); die;
+
+if (!empty($res) && $res[1] === false) {
 	$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $res;
 	$_SERVER["PHP_SELF"] = $_SERVER["SCRIPT_NAME"] = "/bitrix/urlrewrite.php";
 	$_SERVER["SCRIPT_FILENAME"] = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/urlrewrite.php";
