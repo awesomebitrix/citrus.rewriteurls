@@ -86,12 +86,13 @@ function init() {
 		return;
 	}
 	$options = Options();
-
 	// rewrite urls
 	if ($options["rewrite_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnFileRewrite", function (Event $e) {
 			global $APPLICATION;
-			if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
+			$options = Options();
+			if ($options["apply_with_panel"] != "Y"
+					|| !$APPLICATION->showPanelWasInvoked) { // ignore for admin panel
 				return;
 			}
 			$path = $e->getParameter("path");
@@ -102,7 +103,6 @@ function init() {
 			if (empty($rewriteUrls)) {
 				return;
 			}
-			$options = Options();
 			if ($options["ignore_query"] == "Y") {
 				$uri = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
 			} else {
@@ -137,7 +137,9 @@ function init() {
 	if ($options["replace_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent", function (&$content) {
 			global $APPLICATION;
-			if ($APPLICATION->showPanelWasInvoked) { // ignore for admin panel
+			$options = Options();
+			if ($options["apply_with_panel"] != "Y"
+					|| !$APPLICATION->showPanelWasInvoked) { // ignore for admin panel
 				return;
 			}
 			if (!is_readable(FILE_REPLACE_URLS)) {
