@@ -5,7 +5,7 @@
  * MIT License
  ******************************************************************************/
 
-namespace Citrus\RewriteurlsPrepend;
+namespace Citrus\Rewriteurls;
 
 define(__NAMESPACE__ . "\ID", "citrus.rewriteurls");
 
@@ -19,13 +19,23 @@ define(__NAMESPACE__ . "\FILE_OPTIONS", CONFIG . ".php");
 define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".rewrite.php");
 define(__NAMESPACE__ . "\FILE_REPLACE_URLS", CONFIG . ".replace.php");
 
+class ctx {
+	static $replaceUrls;
+}
+
 function Options() {
 	$result = is_readable(FILE_OPTIONS)? include FILE_OPTIONS : array(
 		"rewrite_urls" => "Y",
 		"replace_urls" => "Y",
 		"ignore_query" => "Y",
+		"apply_with_panel" => "Y",
 	);
 	return $result;
+}
+
+// TODO get path and type for page url
+function RouteUrl() {
+	//...
 }
 
 function RewriteUrl() {
@@ -73,12 +83,43 @@ function RewriteUrl() {
 	return $newUri;
 }
 
-$res = RewriteUrl();
-if (!empty($res)) {
-	$_SERVER["REQUEST_URI"] = $_SERVER["REDIRECT_URL"] = $res;
-	$_SERVER["PHP_SELF"] = $_SERVER["SCRIPT_NAME"] = "/bitrix/urlrewrite.php";
-	$_SERVER["SCRIPT_FILENAME"] = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/urlrewrite.php";
-	$_SERVER["REDIRECT_STATUS"] = "200";
-	require $_SERVER["SCRIPT_FILENAME"];
-	exit;
+function ReplaceUrls($m) {
+	if (strpos($m[1], 'href=') === false) {
+		return $m[0];
+	}
+	if (strpos($m[1], 'data-fixed=') !== false) {
+		return $m[0];
+	}
+	if (strpos($m[1], 'href=""') !== false || strpos($m[1], "href=''") !== false) {
+		return $m[0];
+	}
+	if (!preg_match('{href=[\'\"]+(.+?)[\'\"]+}i', $m[1], $mattrs)) {
+		return $m[0];
+	}
+	// if is internal link
+	if ((strpos($mattrs[1], 'http://') === false
+				&& strpos($mattrs[1], 'https://') === false) ||
+			strpos($mattrs[1], $_SERVER['SERVER_NAME']) !== false ||
+			strpos($mattrs[1], 'www.' . $_SERVER['SERVER_NAME']) !== false) {
+		$url = $mattrs[1];
+		$u = parse_url($url);
+		$newUrl = $url;
+		// fix link - add / at end
+		if ($u['path'] != '' && $u['path'] != '/' &&
+				substr($u['path'], -1) != '/' &&
+				($u['scheme'] == '' || $u['scheme'] == 'http' || $u['scheme'] == 'https')) {
+			$p = pathinfo($u['path']);
+			if (empty($p['extension'])) {
+				$newUrl = $url . '/';
+				$m[0] = str_replace($url, $newUrl, $m[0]);
+			}
+		}
+		// rewrite url if defined
+		if (!empty(ctx::$replaceUrls)) {
+			if (isset(ctx::$replaceUrls[$newUrl])) {
+				$m[0] = str_replace($newUrl, ctx::$replaceUrls[$newUrl], $m[0]);
+			}
+		}
+	}
+	return $m[0];
 }

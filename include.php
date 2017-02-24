@@ -13,71 +13,8 @@ use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 
-define(__NAMESPACE__ . "\ID", "citrus.rewriteurls");
-
-define(__NAMESPACE__ . "\SITE", substr($_SERVER["SERVER_NAME"], 0, 4) == "www."?
-	substr($_SERVER["SERVER_NAME"], 4) : $_SERVER["SERVER_NAME"]);
-
-define(__NAMESPACE__ . "\CONFIG",
-	$_SERVER["DOCUMENT_ROOT"] . "/upload/." . ID . "." . SITE);
-
-define(__NAMESPACE__ . "\FILE_OPTIONS", CONFIG . ".php");
-define(__NAMESPACE__ . "\FILE_REWRITE_URLS", CONFIG . ".rewrite.php");
-define(__NAMESPACE__ . "\FILE_REPLACE_URLS", CONFIG . ".replace.php");
-
-class ctx {
-	static $replaceUrls;
-}
-
-function Options() {
-	$result = is_readable(FILE_OPTIONS)? include FILE_OPTIONS : array(
-		"rewrite_urls" => "Y",
-		"replace_urls" => "Y",
-		"ignore_query" => "Y",
-	);
-	return $result;
-}
-
-function ReplaceUrls($m) {
-	if (strpos($m[1], 'href=') === false) {
-		return $m[0];
-	}
-	if (strpos($m[1], 'data-fixed=') !== false) {
-		return $m[0];
-	}
-	if (strpos($m[1], 'href=""') !== false || strpos($m[1], "href=''") !== false) {
-		return $m[0];
-	}
-	if (!preg_match('{href=[\'\"]+(.+?)[\'\"]+}i', $m[1], $mattrs)) {
-		return $m[0];
-	}
-	// if is internal link
-	if ((strpos($mattrs[1], 'http://') === false
-				&& strpos($mattrs[1], 'https://') === false) ||
-			strpos($mattrs[1], $_SERVER['SERVER_NAME']) !== false ||
-			strpos($mattrs[1], 'www.' . $_SERVER['SERVER_NAME']) !== false) {
-		$url = $mattrs[1];
-		$u = parse_url($url);
-		$newUrl = $url;
-		// fix link - add / at end
-		if ($u['path'] != '' && $u['path'] != '/' &&
-				substr($u['path'], -1) != '/' &&
-				($u['scheme'] == '' || $u['scheme'] == 'http' || $u['scheme'] == 'https')) {
-			$p = pathinfo($u['path']);
-			if (empty($p['extension'])) {
-				$newUrl = $url . '/';
-				$m[0] = str_replace($url, $newUrl, $m[0]);
-				//echo '<!-- ' . $u['path'] . ' - ' . print_r($p, true) . ' -->' . PHP_EOL;
-			}
-		}
-		// rewrite url if defined
-		if (!empty(ctx::$replaceUrls)) {
-			if (isset(ctx::$replaceUrls[$newUrl])) {
-				$m[0] = str_replace($newUrl, ctx::$replaceUrls[$newUrl], $m[0]);
-			}
-		}
-	}
-	return $m[0];
+if (!defined(__NAMESPACE__ . "\ID")) {
+	require __DIR__ . "/lib/.init.php";
 }
 
 function init() {
@@ -109,15 +46,20 @@ function init() {
 				$uri = $_SERVER["REQUEST_URI"];
 			}
 			if (isset($rewriteUrls[$uri])) {
+				global $CITRUS_REWRITEURLS;
 				$newUri = $rewriteUrls[$uri];
 				// static page
 				if ((substr($newUri, -4) == ".php"
 							|| substr($newUri, -4) == ".htm"
 							|| substr($newUri, -5) == ".html")
 						&& file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri)) {
+					$CITRUS_REWRITEURLS["current_path"] = $newUri;
+					var_dump($CITRUS_REWRITEURLS);
 					return new EventResult(EventResult::SUCCESS, $newUri);
 				}
 				if (file_exists($_SERVER["DOCUMENT_ROOT"] . $newUri . "/index.php")) {
+					$CITRUS_REWRITEURLS["current_path"] = $newUri;
+					var_dump($CITRUS_REWRITEURLS);
 					return new EventResult(EventResult::SUCCESS, $newUri . "/index.php");
 				}
 				/*
