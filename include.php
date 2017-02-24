@@ -18,8 +18,10 @@ if (!defined(__NAMESPACE__ . "\ID")) {
 }
 
 function init() {
-	if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")
-			|| \CSite::InDir("/bitrix/")) { // ignore non GET and HEAD requests and admin pages
+	//if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")) { // ignore non GET and HEAD requests
+	//	return;
+	//}
+	if (\CSite::InDir("/bitrix/")) { // ignore  admin pages
 		return;
 	}
 	$options = Options();
