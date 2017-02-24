@@ -35,14 +35,15 @@ function init() {
 			//$path = $e->getParameter("path");
 			list($uri, $isStaticPage) = Route();
 			if ($isStaticPage) {
-				//var_dump("static", $uri);
+				global $CITRUS_REWRITEURLS; // for public pages
+				$CITRUS_REWRITEURLS["fix_breadcrumbs"] = true;
 				return new EventResult(EventResult::SUCCESS, $uri);
 			}
 		});
 	}
 
 	// replace urls
-	if ($options["replace_urls"] == "Y") {
+	if ($options["rewrite_urls"] == "Y" && $options["replace_urls"] == "Y") {
 		EventManager::getInstance()->addEventHandler("main", "OnEndBufferContent", function (&$content) {
 			global $APPLICATION;
 			$options = Options();
@@ -65,6 +66,19 @@ function init() {
 				__NAMESPACE__ . "\ReplaceUrls",
 				$content
 			);
+		});
+		// FIX for breadcrumbs
+		EventManager::getInstance()->addEventHandler("main", "OnEpilog", function () {
+			if (\CSite::InDir("/bitrix/")) {
+				return;
+			}
+			global $APPLICATION, $CITRUS_REWRITEURLS;
+			if (!empty($CITRUS_REWRITEURLS["fix_breadcrumbs"])) {
+				$APPLICATION->AddChainItem($APPLICATION->GetTitle());
+			}
+			//if (!empty($CITRUS_CUSTOM["last_chain"])) {
+			//	$APPLICATION->AddChainItem($CITRUS_CUSTOM["last_chain"]);
+			//}
 		});
 	}
 }
