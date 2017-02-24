@@ -24,6 +24,7 @@ class ctx {
 	static $rewriteUrlsParts;
 	static $replaceUrls;
 	static $replaceUrlsParts;
+	static $ignoreQuery;
 }
 
 function Options() {
@@ -42,16 +43,6 @@ function Route($uri = null, $checkPageType = true) {
 	//}
 	$options = Options();
 	if ($options["rewrite_urls"] != "Y") {
-		return null;
-	}
-	// init rewrite urls
-	if (empty(ctx::$rewriteUrls) && is_readable(FILE_REWRITE_URLS)) {
-		ctx::$rewriteUrls = include FILE_REWRITE_URLS;
-	}
-	if (empty(ctx::$rewriteUrlsParts) && is_readable(FILE_REWRITE_URLS_PARTS)) {
-		ctx::$rewriteUrlsParts = include FILE_REWRITE_URLS_PARTS;
-	}
-	if (empty(ctx::$rewriteUrls) && empty(ctx::$rewriteUrlsParts)) {
 		return null;
 	}
 	// route url
@@ -124,11 +115,22 @@ function ReplaceUrls($m) {
 			}
 		}
 		// rewrite url if defined
-		if (!empty(ctx::$replaceUrls)) {
+		if (!empty(ctx::$replaceUrls) || !empty(ctx::$replaceUrlsParts)) {
+			if (ctx::$ignoreQuery) {
+				$newUrl = parse_url($newUrl, PHP_URL_PATH);
+			}
 			if (isset(ctx::$replaceUrls[$newUrl])) {
+				// replace exact urls
 				$m[0] = str_replace($newUrl, ctx::$replaceUrls[$newUrl], $m[0]);
 			} else {
-				//... TODO find for patt url
+				// replace part urls
+				foreach (ctx::$replaceUrlsParts as $fromUri => $toUri) {
+					if (substr($newUrl, 0, strlen($fromUri)) == $fromUri) {
+						$tmp = $toUri . substr($newUrl, strlen($fromUri));
+						$m[0] = str_replace($newUrl, $tmp, $m[0]);
+						break;
+					}
+				}
 			}
 		}
 	}

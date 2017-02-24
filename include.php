@@ -35,7 +35,7 @@ function init() {
 			//$path = $e->getParameter("path");
 			list($uri, $isStaticPage) = Route();
 			if ($isStaticPage) {
-				var_dump("static", $uri);
+				//var_dump("static", $uri);
 				return new EventResult(EventResult::SUCCESS, $uri);
 			}
 		});
@@ -50,14 +50,16 @@ function init() {
 					|| !$APPLICATION->showPanelWasInvoked) { // ignore for admin panel
 				return;
 			}
-			if (!is_readable(FILE_REPLACE_URLS)) {
+			if (!empty(ctx::$rewriteUrls)) {
+				ctx::$replaceUrls = array_flip(ctx::$rewriteUrls);
+			}
+			if (!empty(ctx::$rewriteUrlsParts)) {
+				ctx::$replaceUrlsParts = array_flip(ctx::$rewriteUrlsParts);
+			}
+			if (empty(ctx::$replaceUrls) && empty(ctx::$replaceUrlsParts)) {
 				return;
 			}
-			ctx::$replaceUrls = include FILE_REPLACE_URLS;
-			if (empty(ctx::$replaceUrls)) {
-				return;
-			}
-			ctx::$replaceUrls = array_flip(ctx::$replaceUrls);
+			ctx::$ignoreQuery = $options["ignore_query"] == "Y";
 			$content = preg_replace_callback(
 				'{<a([^>]*)>}is',
 				__NAMESPACE__ . "\ReplaceUrls",
