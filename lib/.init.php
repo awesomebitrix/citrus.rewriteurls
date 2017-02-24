@@ -25,6 +25,7 @@ class ctx {
 	static $replaceUrls;
 	static $replaceUrlsParts;
 	static $ignoreQuery;
+	static $fixBreadcrumbs;
 }
 
 function Options() {

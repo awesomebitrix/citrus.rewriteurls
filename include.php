@@ -35,8 +35,7 @@ function init() {
 			//$path = $e->getParameter("path");
 			list($uri, $isStaticPage) = Route();
 			if ($isStaticPage) {
-				global $CITRUS_REWRITEURLS; // for public pages
-				$CITRUS_REWRITEURLS["fix_breadcrumbs"] = true;
+				ctx::$fixBreadcrumbs = true;
 				return new EventResult(EventResult::SUCCESS, $uri);
 			}
 		});
@@ -72,8 +71,8 @@ function init() {
 			if (\CSite::InDir("/bitrix/")) {
 				return;
 			}
-			global $APPLICATION, $CITRUS_REWRITEURLS;
-			if (!empty($CITRUS_REWRITEURLS["fix_breadcrumbs"])) {
+			global $APPLICATION;
+			if (!empty(ctx::$fixBreadcrumbs) {
 				$APPLICATION->AddChainItem($APPLICATION->GetTitle());
 			}
 			//if (!empty($CITRUS_CUSTOM["last_chain"])) {
