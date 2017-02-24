@@ -37,7 +37,7 @@ function Options() {
 	return $result;
 }
 
-function Route($uri = null, $checkPageType = true) {
+function Route($uri = null) {
 	//if (($_SERVER["REQUEST_METHOD"] != "GET" && $_SERVER["REQUEST_METHOD"] != "HEAD")) { // ignore non GET and HEAD requests
 	//	return;
 	//}
@@ -67,9 +67,6 @@ function Route($uri = null, $checkPageType = true) {
 	}
 	if ($newUri == "") {
 		return null;
-	}
-	if (!$checkPageType) {
-		return array($newUri, null);
 	}
 	if ((substr($newUri, -4) == ".php"
 				|| substr($newUri, -4) == ".htm"
